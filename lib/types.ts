@@ -6,6 +6,26 @@ export type Goal = "debt_free" | "save" | "grow";
 export type Problem = "no_money" | "debts" | "no_saving" | "impulse" | "no_plan";
 export type DebtKind = "credit" | "mortgage" | "installment" | "card" | "other";
 
+export type ExpenseCategory =
+  | "food"
+  | "housing"
+  | "health"
+  | "transport"
+  | "debts"
+  | "cafe"
+  | "fun"
+  | "shopping"
+  | "other";
+
+// Одна трата из истории операций.
+export type Expense = {
+  id: string;
+  name: string;
+  amount: number; // руб.
+  category: ExpenseCategory;
+  necessary: boolean; // человек отметил, что без неё нельзя было обойтись
+};
+
 export type Debt = {
   id: string;
   kind: DebtKind;
@@ -34,6 +54,8 @@ export type Profile = {
   mandatory: number; // обязательные расходы без долгов: жильё, еда, транспорт
   debts: Debt[];
   wishes: Wish[];
+  expenses: Expense[]; // разобранная история трат (экран /review)
+  reviewDone: boolean; // разбор трат пройден, повторно не предлагать
   largeText: boolean;
   step: number;
 };
@@ -50,6 +72,8 @@ export const emptyProfile: Profile = {
   mandatory: 0,
   debts: [],
   wishes: [],
+  expenses: [],
+  reviewDone: false,
   largeText: false,
   step: 0,
 };

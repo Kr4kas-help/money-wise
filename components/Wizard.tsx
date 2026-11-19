@@ -7,8 +7,12 @@ import ProfileSteps from './ProfileSteps';
 import MoneySteps from './MoneySteps';
 import CacheNote from './CacheNote';
 import { useProfile } from '@/lib/store';
+import type { Problem } from '@/lib/types';
 
 const LAST = 7;
+
+// Проблемы с тратами: для них после шага 3 открывается разбор трат (/review).
+const REVIEW_TRIGGERS: Problem[] = ['no_money', 'no_saving', 'impulse', 'no_plan'];
 
 export default function Wizard() {
   const { profile: p, update, ready } = useProfile();
@@ -17,6 +21,8 @@ export default function Wizard() {
   if (!ready) return null;
   // Первый визит: сначала простой пример 70/20/10, потом анкета.
   if (p.step === 0 && !p.ageGroup && !seen) return <ModelIntro onStart={() => setSeen(true)} />;
+
+  const needsReview = p.problems.some((x) => REVIEW_TRIGGERS.includes(x)) && !p.reviewDone;
 
   const canNext =
     (p.step === 0 && !!p.ageGroup) ||
@@ -27,7 +33,17 @@ export default function Wizard() {
     (p.step === 5 && p.income > 0) ||
     p.step >= 6;
 
-  const next = () => (p.step >= LAST ? router.push('/plan') : update({ step: p.step + 1 }));
+  const next = () => {
+    if (p.step === 3 && needsReview) {
+      router.push('/review');
+      return;
+    }
+    if (p.step >= LAST) {
+      router.push('/plan');
+      return;
+    }
+    update({ step: p.step + 1 });
+  };
   const back = () => update({ step: Math.max(0, p.step - 1) });
 
   return (
@@ -50,6 +66,13 @@ export default function Wizard() {
 
       <ProfileSteps />
       <MoneySteps />
+
+      {p.step === 3 && needsReview && (
+        <p className='prose-line mt-6 rounded-lg bg-mist p-3'>
+          Вы отметили вопрос с тратами. После кнопки «Дальше» мы вместе разберём, куда уходят деньги, и подберём
+          подходящее правило.
+        </p>
+      )}
 
       <div className='mt-8 flex flex-wrap gap-3'>
         {p.step > 0 && (
