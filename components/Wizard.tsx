@@ -7,8 +7,12 @@ import ProfileSteps from './ProfileSteps';
 import MoneySteps from './MoneySteps';
 import CacheNote from './CacheNote';
 import { useProfile } from '@/lib/store';
+import type { Problem } from '@/lib/types';
 
 const LAST = 7;
+
+// Проблемы с тратами: для них после шага 3 открывается разбор трат (/review).
+const REVIEW_TRIGGERS: Problem[] = ['no_money', 'no_saving', 'impulse', 'no_plan'];
 
 export default function Wizard() {
   const { profile: p, update, ready } = useProfile();
@@ -17,6 +21,9 @@ export default function Wizard() {
   if (!ready) return null;
   // Первый визит: сначала простой пример 70/20/10, потом анкета.
   if (p.step === 0 && !p.ageGroup && !seen) return <ModelIntro onStart={() => setSeen(true)} />;
+
+  const hasSpendingProblem = p.problems.some((x) => REVIEW_TRIGGERS.includes(x));
+  const needsReview = hasSpendingProblem && !p.reviewDone;
 
   const canNext =
     (p.step === 0 && !!p.ageGroup) ||
@@ -27,7 +34,17 @@ export default function Wizard() {
     (p.step === 5 && p.income > 0) ||
     p.step >= 6;
 
-  const next = () => (p.step >= LAST ? router.push('/plan') : update({ step: p.step + 1 }));
+  const next = () => {
+    if (p.step === 3 && needsReview) {
+      router.push('/review');
+      return;
+    }
+    if (p.step >= LAST) {
+      router.push('/plan');
+      return;
+    }
+    update({ step: p.step + 1 });
+  };
   const back = () => update({ step: Math.max(0, p.step - 1) });
 
   return (
@@ -50,6 +67,24 @@ export default function Wizard() {
 
       <ProfileSteps />
       <MoneySteps />
+
+      {p.step === 3 && hasSpendingProblem && (
+        <section className='mt-6 rounded-lg border-2 border-honey bg-white p-4' aria-live='polite'>
+          <h2>Разберём ваши траты</h2>
+          <p className='prose-line mt-2'>
+            Вы отметили вопрос с тратами. Вставьте историю операций из банка (текстом, файлом или скриншотом): мы сами
+            разобьём её на траты, вы отметите нужные, а мы подберём золотое правило именно для вас.
+          </p>
+          <div className='mt-4 flex flex-wrap gap-3'>
+            <button type='button' className='btn btn-gold' onClick={() => router.push('/review')}>
+              Внести траты из банка
+            </button>
+          </div>
+          <p className='mt-3 text-ink/70' style={{ fontSize: 'var(--fs-small)' }}>
+            Всё обрабатывается в вашем браузере и никуда не отправляется.
+          </p>
+        </section>
+      )}
 
       <div className='mt-8 flex flex-wrap gap-3'>
         {p.step > 0 && (

@@ -38,7 +38,11 @@ export default function Header() {
         </nav>
       </div>
       <div className='bg-mist'>
-        <p className='prose-line mx-auto max-w-4xl px-4 py-3 font-serif italic text-ink sm:px-6' aria-live='polite'>
+        <p
+          className='prose-line mx-auto max-w-4xl px-4 py-3 font-serif font-semibold italic sm:px-6'
+          style={{ color: '#B8860B' }}
+          aria-live='polite'
+        >
           «{quotes[i].text}»
         </p>
       </div>
