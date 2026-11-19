@@ -22,7 +22,8 @@ export default function Wizard() {
   // Первый визит: сначала простой пример 70/20/10, потом анкета.
   if (p.step === 0 && !p.ageGroup && !seen) return <ModelIntro onStart={() => setSeen(true)} />;
 
-  const needsReview = p.problems.some((x) => REVIEW_TRIGGERS.includes(x)) && !p.reviewDone;
+  const hasSpendingProblem = p.problems.some((x) => REVIEW_TRIGGERS.includes(x));
+  const needsReview = hasSpendingProblem && !p.reviewDone;
 
   const canNext =
     (p.step === 0 && !!p.ageGroup) ||
@@ -67,11 +68,22 @@ export default function Wizard() {
       <ProfileSteps />
       <MoneySteps />
 
-      {p.step === 3 && needsReview && (
-        <p className='prose-line mt-6 rounded-lg bg-mist p-3'>
-          Вы отметили вопрос с тратами. После кнопки «Дальше» мы вместе разберём, куда уходят деньги, и подберём
-          подходящее правило.
-        </p>
+      {p.step === 3 && hasSpendingProblem && (
+        <section className='mt-6 rounded-lg border-2 border-honey bg-white p-4' aria-live='polite'>
+          <h2>Разберём ваши траты</h2>
+          <p className='prose-line mt-2'>
+            Вы отметили вопрос с тратами. Вставьте историю операций из банка (текстом, файлом или скриншотом): мы сами
+            разобьём её на траты, вы отметите нужные, а мы подберём золотое правило именно для вас.
+          </p>
+          <div className='mt-4 flex flex-wrap gap-3'>
+            <button type='button' className='btn btn-gold' onClick={() => router.push('/review')}>
+              Внести траты из банка
+            </button>
+          </div>
+          <p className='mt-3 text-ink/70' style={{ fontSize: 'var(--fs-small)' }}>
+            Всё обрабатывается в вашем браузере и никуда не отправляется.
+          </p>
+        </section>
       )}
 
       <div className='mt-8 flex flex-wrap gap-3'>
